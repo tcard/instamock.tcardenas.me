@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>instamock</title>
+</head>
+
+<body>
+
+<div style="width: 50%; float: left;">
+<strong>Give me your interface...</strong>
+<textarea id="input-code" style="width: 90%; font-family: monospace;" rows="30">
+type FileSystem interface {
+	Open(name string) (File, error)
+}
+</textarea>
+
+Imported as package: <input type="text" id="pkg-name">
+
+</div>
+
+<div>
+<strong>... take your mock</strong>
+<textarea id="translated" style="width: 45%; overflow: scroll;" rows="30">
+
+</textarea>
+</div>
+
+<p><a href="https://github.com/tcard/instamock.tcardenas.me">Source code on GitHub</a></p>
+
+<script src="wasm_exec.js"></script>
+<script>
+const go = new Go(); // Defined in wasm_exec.js
+const WASM_URL = 'instamock.wasm';
+
+var translate = function() {};
+goTranslate = function() { return ''; };
+
+var wasm;
+function onWASM(obj) {
+	wasm = obj.instance;
+	go.run(wasm);
+	translate();
+};
+
+if ('instantiateStreaming' in WebAssembly) {
+	WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(onWASM);
+} else {
+	fetch(WASM_URL).then(resp =>
+		resp.arrayBuffer()
+	).then(bytes =>
+		WebAssembly.instantiate(bytes, go.importObject).then(onWASM)
+	);
+}
+
+window.addEventListener("load", function(evt) {
+	var inputCode = document.getElementById("input-code");
+	var translated = document.getElementById("translated");
+	var pkgName = document.getElementById("pkg-name");
+
+	translate = function() {
+		translated.value = goTranslate(inputCode.value, pkgName.value.trim());
+	};
+
+	inputCode.onchange = translate;
+	inputCode.onkeyup = translate;
+	pkgName.onchange = translate;
+	pkgName.onkeyup = translate;
+	translate();
+
+	inputCode.addEventListener('keydown',function(e) {
+		if(e.keyCode === 9) { 
+			
+			var start = this.selectionStart;
+			var end = this.selectionEnd;
+
+			var target = e.target;
+			var value = target.value;
+
+			
+			target.value = value.substring(0, start)
+						+ "\t"
+						+ value.substring(end);
+
+			
+			this.selectionStart = this.selectionEnd = start + 1;
+
+			
+			e.preventDefault();
+		}
+	},false);
+});
+
+
+function ajax(e,t,i){i=window.XMLHttpRequest?new XMLHttpRequest:new ActiveXObject("Microsoft.XMLHTTP"),i.onreadystatechange=function(){4==i.readyState&&(/^2/.test(i.status)&&t.success?t.success(i):/^5/.test(i.status)&&t.fail?t.fail(i):t.other&&t.other(i))},i.open(t.method||"GET",e,!0),i.send(t.data)}
+</script>
+</body>
+
+</html>
+

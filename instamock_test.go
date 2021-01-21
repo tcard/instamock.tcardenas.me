@@ -20,21 +20,21 @@ type MyInterface interface {
 }
 `,
 			expected: `type MyInterfaceMock struct {
-	foo func(ext.Type) (int, mypkg.MyType)
-	bar func()
-	nene func(a, b int, dame mypkg.Toma, mas ...interface{})
+	fooFunc func(ext.Type) (int, mypkg.MyType)
+	barFunc func()
+	neneFunc func(a, b int, dame mypkg.Toma, mas ...interface{})
 }
 
-func (m MyInterfaceMock) foo(a0 ext.Type) (int, mypkg.MyType) {
-	return MyInterfaceMock.foo(a0)
+func (r MyInterfaceMock) foo(a0 ext.Type) (int, mypkg.MyType) {
+	return r.fooFunc(a0)
 }
 
-func (m MyInterfaceMock) bar() {
-	MyInterfaceMock.bar()
+func (r MyInterfaceMock) bar() {
+	r.barFunc()
 }
 
-func (m MyInterfaceMock) nene(a, b int, dame mypkg.Toma, mas ...interface{}) {
-	MyInterfaceMock.nene(a, b, dame, mas...)
+func (r MyInterfaceMock) nene(a, b int, dame mypkg.Toma, mas ...interface{}) {
+	r.neneFunc(a, b, dame, mas...)
 }
 `,
 		},
@@ -47,31 +47,31 @@ type embedder interface {
 
 `,
 			expected: `type embedderMock struct {
-	Qux func()
+	QuxFunc func()
 }
 
-func (m embedderMock) Qux() {
-	embedderMock.Qux()
+func (r embedderMock) Qux() {
+	r.QuxFunc()
 }
 `,
 		},
 		{
-			src: `
+			src: `	
 type coso interface {
 	single(ext.Type) (int, MyType)
 }
 `,
 			expected: `type cosoFunc func(ext.Type) (int, mypkg.MyType)
 
-func (m cosoFunc) single(a0 ext.Type) (int, mypkg.MyType) {
-	return cosoFunc(a0)
+func (r cosoFunc) single(a0 ext.Type) (int, mypkg.MyType) {
+	return r(a0)
 }
 type cosoMock struct {
-	single func(a0 ext.Type) (int, mypkg.MyType)
+	singleFunc func(a0 ext.Type) (int, mypkg.MyType)
 }
 
-func (m cosoMock) single(a0 ext.Type) (int, mypkg.MyType) {
-	return cosoMock.single(a0)
+func (r cosoMock) single(a0 ext.Type) (int, mypkg.MyType) {
+	return r.singleFunc(a0)
 }
 `,
 		},

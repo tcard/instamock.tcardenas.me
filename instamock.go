@@ -8,21 +8,7 @@ import (
 	"go/token"
 	"io"
 	"strings"
-	"syscall/js"
 )
-
-func main() {
-	js.Global().Set("goTranslate", js.FuncOf(func(this js.Value, p []js.Value) (ret interface{}) {
-		defer func() {
-			r := recover()
-			if r != nil {
-				ret = fmt.Sprint(r)
-			}
-		}()
-		return translate(p[0].String(), p[1].String())
-	}))
-	select {}
-}
 
 //export translate
 func translate(src, pkg string) string {
@@ -100,7 +86,7 @@ declsLoop:
 		if !ok {
 			continue
 		}
-		fmt.Fprintf(&dst, "\n\t%s ", m.Names[0])
+		fmt.Fprintf(&dst, "\n\t%sFunc ", m.Names[0])
 		printer.Fprint(&dst, &fset, m.Type)
 	}
 	fmt.Fprintf(&dst, "\n}\n")
@@ -140,16 +126,16 @@ func printMethodDelegate(
 	}
 
 	fmt.Fprintf(w,
-		"\nfunc (m %s) %s%s {\n\t",
+		"\nfunc (r %s) %s%s {\n\t",
 		recv, method,
 		printGo(fn)[len("func"):],
 	)
 	if fn.Results != nil {
 		fmt.Fprint(w, "return ")
 	}
-	fmt.Fprint(w, recv)
+	fmt.Fprint(w, "r")
 	if !recvIsFunc {
-		fmt.Fprintf(w, ".%s", method)
+		fmt.Fprintf(w, ".%sFunc", method)
 	}
 
 	fmt.Fprintf(w, "(%s)\n}\n", strings.Join(args, ", "))

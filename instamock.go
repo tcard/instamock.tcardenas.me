@@ -43,6 +43,25 @@ declsLoop:
 
 	if pkg != "" {
 		// Qualify package names for unqualified, non-builtin named types.
+		var visitor astVisitorFunc
+		visitor = func(n ast.Node) ast.Visitor {
+			switch n := n.(type) {
+			case *ast.Field:
+				ast.Walk(visitor, n.Type)
+				return nil
+			case *ast.Ident:
+				if _, ok := builtins[n.Name]; ok {
+					return nil
+				}
+				n.Name = pkg + "." + n.Name // bad, but works
+				return nil
+			case *ast.SelectorExpr:
+				// Selectors in type expressions are always qualified names.
+				return nil
+			}
+			return visitor
+		}
+		ast.Walk(visitor, iface)
 		for _, m := range iface.Methods.List {
 			fn, ok := m.Type.(*ast.FuncType)
 			if !ok {
@@ -63,10 +82,6 @@ declsLoop:
 				if id == nil {
 					continue
 				}
-				if _, ok := builtins[id.Name]; ok {
-					continue
-				}
-				id.Name = pkg + "." + id.Name // bad, but works
 			}
 		}
 	}
@@ -77,6 +92,7 @@ declsLoop:
 		if ok {
 			fmt.Fprintf(&dst, "type %sFunc %s\n", typ.Name, printGo(fn))
 			printMethodDelegate(&dst, &fset, typ.Name.Name+"Func", m.Names[0].Name, fn, true)
+			fmt.Fprintln(&dst)
 		}
 	}
 
@@ -176,4 +192,10 @@ var builtins = map[string]struct{}{
 	`uint64`:     {},
 	`uint8`:      {},
 	`uintptr`:    {},
+}
+
+type astVisitorFunc func(node ast.Node) (w ast.Visitor)
+
+func (r astVisitorFunc) Visit(node ast.Node) (w ast.Visitor) {
+	return r(node)
 }
